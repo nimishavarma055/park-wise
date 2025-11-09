@@ -126,11 +126,11 @@ export const Home = () => {
   }, [parkingsWithDistance]);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-soft">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
           <div className="mb-6">
-            <h1 className="text-4xl font-bold text-gray-900 mb-2 bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">
+            <h1 className="text-4xl font-bold text-accent mb-2 bg-gradient-to-r from-primary to-cta bg-clip-text text-transparent">
               Find Parking Near You
             </h1>
             <p className="text-gray-600 text-lg">Discover the perfect parking spot for your needs</p>
@@ -338,8 +338,8 @@ export const Home = () => {
         {/* Quick Stats */}
         {sortedParkings.length > 0 && (
           <div className="mt-10">
-            <Card variant="elevated" className="p-8 bg-gradient-to-br from-primary/5 to-blue-50/50 border-primary/20">
-              <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
+            <Card variant="elevated" className="p-8 bg-gradient-to-br from-primary/5 to-cta/10 border-primary/20">
+              <h3 className="text-xl font-bold text-accent mb-6 flex items-center">
                 <span className="w-1 h-6 bg-primary rounded-full mr-3"></span>
                 Quick Stats
               </h3>
@@ -350,19 +350,19 @@ export const Home = () => {
                 </div>
                 <div className="text-center p-4 bg-white rounded-xl shadow-sm">
                   <p className="text-gray-600 text-sm mb-2 font-medium">Covered</p>
-                  <p className="text-3xl font-bold text-blue-600">
+                  <p className="text-3xl font-bold text-primary">
                     {sortedParkings.filter((p) => p.type === 'covered').length}
                   </p>
                 </div>
                 <div className="text-center p-4 bg-white rounded-xl shadow-sm">
                   <p className="text-gray-600 text-sm mb-2 font-medium">Open</p>
-                  <p className="text-3xl font-bold text-green-600">
+                  <p className="text-3xl font-bold text-secondary">
                     {sortedParkings.filter((p) => p.type === 'open').length}
                   </p>
                 </div>
                 <div className="text-center p-4 bg-white rounded-xl shadow-sm">
                   <p className="text-gray-600 text-sm mb-2 font-medium">Hourly Available</p>
-                  <p className="text-3xl font-bold text-purple-600">
+                  <p className="text-3xl font-bold text-cta">
                     {sortedParkings.filter((p) => p.pricePerHour).length}
                   </p>
                 </div>

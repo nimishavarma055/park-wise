@@ -36,7 +36,7 @@ export const ParkingDetails = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-soft">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
@@ -45,7 +45,7 @@ export const ParkingDetails = () => {
             <Card variant="elevated" className="p-8 mt-6">
               <div className="flex items-start justify-between mb-6">
                 <div className="flex-1">
-                  <h1 className="text-4xl font-bold text-gray-900 mb-3 bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">
+                  <h1 className="text-4xl font-bold text-accent mb-3 bg-gradient-to-r from-primary to-cta bg-clip-text text-transparent">
                     {parking.name}
                   </h1>
                   <div className="flex items-center text-gray-600 mb-4">
@@ -64,8 +64,8 @@ export const ParkingDetails = () => {
                 <div className="flex items-center">
                   <span className={`px-4 py-2 rounded-lg text-sm font-semibold shadow-sm ${
                     parking.type === 'covered' 
-                      ? 'bg-blue-100 text-blue-800 border border-blue-200' 
-                      : 'bg-green-100 text-green-800 border border-green-200'
+                      ? 'bg-primary/10 text-primary border border-primary/20' 
+                      : 'bg-secondary/20 text-accent border border-secondary/30'
                   }`}>
                     {parking.type === 'covered' ? 'Covered' : 'Open'} Parking
                   </span>
@@ -86,9 +86,9 @@ export const ParkingDetails = () => {
                   </span>
                 </div>
                 {parking.ownerVerified && (
-                  <div className="flex items-center bg-green-50 px-4 py-2 rounded-lg border border-green-200">
-                    <CheckCircle size={18} className="text-green-600 mr-2" />
-                    <span className="text-sm font-medium text-green-800">Verified Owner</span>
+                  <div className="flex items-center bg-primary/10 px-4 py-2 rounded-lg border border-primary/20">
+                    <CheckCircle size={18} className="text-primary mr-2" />
+                    <span className="text-sm font-medium text-primary">Verified Owner</span>
                   </div>
                 )}
               </div>
@@ -127,7 +127,7 @@ export const ParkingDetails = () => {
                   Owner Information
                 </h2>
                 <div className="flex items-center space-x-4 p-4 bg-gray-50 rounded-xl border border-gray-200">
-                  <div className="w-16 h-16 bg-gradient-to-br from-primary to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-xl shadow-md">
+                  <div className="w-16 h-16 bg-gradient-to-br from-primary to-cta rounded-full flex items-center justify-center text-white font-bold text-xl shadow-md">
                     {parking.ownerName.charAt(0)}
                   </div>
                   <div>
@@ -146,7 +146,7 @@ export const ParkingDetails = () => {
 
           <div className="lg:col-span-1">
             <div className="sticky top-24">
-              <Card variant="elevated" className="p-8 bg-gradient-to-br from-primary/5 to-blue-50/50 border-primary/20">
+              <Card variant="elevated" className="p-8 bg-gradient-to-br from-primary/5 to-cta/10 border-primary/20">
                 <h2 className="text-2xl font-bold mb-6 flex items-center">
                   <span className="w-1 h-6 bg-primary rounded-full mr-3"></span>
                   Pricing
@@ -158,7 +158,7 @@ export const ParkingDetails = () => {
                       onClick={() => setPriceType('hourly')}
                       className={`flex-1 py-3 rounded-xl font-semibold transition-all shadow-sm ${
                         priceType === 'hourly'
-                          ? 'bg-primary text-white shadow-md scale-105'
+                          ? 'bg-cta text-white shadow-md scale-105'
                           : 'bg-white text-gray-700 hover:bg-gray-50 border-2 border-gray-200'
                       }`}
                     >
@@ -167,28 +167,28 @@ export const ParkingDetails = () => {
                   )}
                   <button
                     onClick={() => setPriceType('daily')}
-                    className={`flex-1 py-3 rounded-xl font-semibold transition-all shadow-sm ${
-                      priceType === 'daily'
-                        ? 'bg-primary text-white shadow-md scale-105'
-                        : 'bg-white text-gray-700 hover:bg-gray-50 border-2 border-gray-200'
-                    }`}
+                      className={`flex-1 py-3 rounded-xl font-semibold transition-all shadow-sm ${
+                        priceType === 'daily'
+                          ? 'bg-cta text-white shadow-md scale-105'
+                          : 'bg-white text-gray-700 hover:bg-gray-50 border-2 border-gray-200'
+                      }`}
                   >
                     Daily
                   </button>
                   <button
                     onClick={() => setPriceType('monthly')}
-                    className={`flex-1 py-3 rounded-xl font-semibold transition-all shadow-sm ${
-                      priceType === 'monthly'
-                        ? 'bg-primary text-white shadow-md scale-105'
-                        : 'bg-white text-gray-700 hover:bg-gray-50 border-2 border-gray-200'
-                    }`}
+                      className={`flex-1 py-3 rounded-xl font-semibold transition-all shadow-sm ${
+                        priceType === 'monthly'
+                          ? 'bg-cta text-white shadow-md scale-105'
+                          : 'bg-white text-gray-700 hover:bg-gray-50 border-2 border-gray-200'
+                      }`}
                   >
                     Monthly
                   </button>
                 </div>
 
                 <div className="mb-8 p-6 bg-white rounded-xl shadow-sm border border-gray-100">
-                  <div className="text-5xl font-bold text-primary mb-2">
+                  <div className="text-5xl font-bold text-cta mb-2">
                     ₹{getPrice()}
                   </div>
                   <div className="text-gray-600 font-medium text-lg mb-4">

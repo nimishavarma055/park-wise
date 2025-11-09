@@ -32,7 +32,7 @@ export const MyParking = () => {
       case 'confirmed':
         return 'bg-green-100 text-green-800';
       case 'completed':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-primary/10 text-primary';
       case 'cancelled':
         return 'bg-red-100 text-red-800';
       case 'approved':
@@ -45,7 +45,7 @@ export const MyParking = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-soft">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-8">My Parking</h1>
 
@@ -147,7 +147,7 @@ export const MyParking = () => {
                           ₹{listing.pricePerMonth}/month
                         </span>
                         <span className={`px-2 py-1 rounded ${
-                          listing.type === 'covered' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
+                          listing.type === 'covered' ? 'bg-primary/10 text-primary' : 'bg-secondary/20 text-accent'
                         }`}>
                           {listing.type}
                         </span>

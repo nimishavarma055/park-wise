@@ -34,7 +34,7 @@ export const TimeSlotPicker = ({
               onClick={() => onHourSelect?.(hour)}
               className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                 isSelected
-                  ? 'bg-primary text-white'
+                  ? 'bg-cta text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >

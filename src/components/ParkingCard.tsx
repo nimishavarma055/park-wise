@@ -97,14 +97,14 @@ export const ParkingCard = ({ parking, showTimeSlots = false }: ParkingCardProps
           <span
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold shadow-md backdrop-blur-sm ${
               parking.type === 'covered'
-                ? 'bg-blue-600/90 text-white'
-                : 'bg-green-600/90 text-white'
+                ? 'bg-primary/90 text-white'
+                : 'bg-secondary/90 text-accent'
             }`}
           >
             {parking.type}
           </span>
           {parking.ownerVerified && (
-            <span className="px-2 py-1 bg-white/90 backdrop-blur-sm rounded-lg text-xs font-medium text-green-700 shadow-md">
+            <span className="px-2 py-1 bg-white/90 backdrop-blur-sm rounded-lg text-xs font-medium text-primary shadow-md">
               ✓ Verified
             </span>
           )}
@@ -121,7 +121,7 @@ export const ParkingCard = ({ parking, showTimeSlots = false }: ParkingCardProps
         <DistanceBadge distance={parking.distance} className="mb-3" />
         <AmenityIcons amenities={parking.amenities} className="mb-4" />
         {showTimeSlots && parking.timeSlots && (
-          <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-100">
+          <div className="mb-4 p-3 bg-primary/5 rounded-lg border border-primary/20">
             <TimeSlotPicker timeSlot={parking.timeSlots} />
           </div>
         )}

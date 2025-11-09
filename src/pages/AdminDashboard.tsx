@@ -34,7 +34,7 @@ export const AdminDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-soft">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-8">Admin Dashboard</h1>
 
@@ -92,7 +92,7 @@ export const AdminDashboard = () => {
                       <td className="py-3 px-4">{listing.location}</td>
                       <td className="py-3 px-4">
                         <span className={`px-2 py-1 rounded text-sm ${
-                          listing.type === 'covered' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
+                          listing.type === 'covered' ? 'bg-primary/10 text-primary' : 'bg-secondary/20 text-accent'
                         }`}>
                           {listing.type}
                         </span>

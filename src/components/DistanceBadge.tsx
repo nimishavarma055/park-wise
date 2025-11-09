@@ -11,8 +11,8 @@ export const DistanceBadge = ({ distance, className = '' }: DistanceBadgeProps) 
   }
 
   return (
-    <div className={`inline-flex items-center space-x-1 text-sm text-gray-600 ${className}`}>
-      <MapPin size={14} />
+    <div className={`inline-flex items-center space-x-1 bg-primary/10 text-primary px-3 py-1.5 rounded-full text-sm font-medium ${className}`}>
+      <MapPin size={16} />
       <span>{distance} km away</span>
     </div>
   );

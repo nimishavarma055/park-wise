@@ -61,7 +61,7 @@ export const Navbar = () => {
                   Login
                 </Link>
                 <Link to="/signup">
-                  <button className="bg-primary text-white px-5 py-2.5 rounded-lg hover:bg-blue-700 transition-all shadow-md hover:shadow-lg font-semibold">
+                  <button className="bg-cta text-white px-5 py-2.5 rounded-lg hover:bg-[#00A693] transition-all shadow-md hover:shadow-lg font-semibold">
                     Sign Up
                   </button>
                 </Link>

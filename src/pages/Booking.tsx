@@ -72,7 +72,7 @@ export const Booking = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-soft">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-8">Complete Your Booking</h1>
 
@@ -89,7 +89,7 @@ export const Booking = () => {
                     onClick={() => setDuration('hourly')}
                     className={`flex-1 py-2 rounded-lg font-medium transition-colors ${
                       duration === 'hourly'
-                        ? 'bg-primary text-white'
+                        ? 'bg-cta text-white'
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
                   >
@@ -100,7 +100,7 @@ export const Booking = () => {
                   onClick={() => setDuration('daily')}
                   className={`flex-1 py-2 rounded-lg font-medium transition-colors ${
                     duration === 'daily'
-                      ? 'bg-primary text-white'
+                      ? 'bg-cta text-white'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >
@@ -110,7 +110,7 @@ export const Booking = () => {
                   onClick={() => setDuration('monthly')}
                   className={`flex-1 py-2 rounded-lg font-medium transition-colors ${
                     duration === 'monthly'
-                      ? 'bg-primary text-white'
+                      ? 'bg-cta text-white'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >
@@ -138,7 +138,7 @@ export const Booking = () => {
                     max={parking.timeSlots ? parking.timeSlots.availableHours.length : undefined}
                   />
                   {parking.timeSlots && selectedHour && (
-                    <div className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg">
+                    <div className="text-sm text-gray-600 bg-primary/5 p-3 rounded-lg border border-primary/20">
                       <Clock size={16} className="inline mr-2 inline" />
                       Selected time: {selectedHour.toString().padStart(2, '0')}:00
                       {hours > 1 && ` - ${(selectedHour + hours - 1).toString().padStart(2, '0')}:00`}
@@ -189,7 +189,7 @@ export const Booking = () => {
                   onClick={() => setPaymentMethod('upi')}
                   className={`w-full p-4 border-2 rounded-lg text-left transition-colors ${
                     paymentMethod === 'upi'
-                      ? 'border-primary bg-blue-50'
+                      ? 'border-primary bg-primary/5'
                       : 'border-gray-200 hover:border-gray-300'
                   }`}
                 >
@@ -200,7 +200,7 @@ export const Booking = () => {
                   onClick={() => setPaymentMethod('razorpay')}
                   className={`w-full p-4 border-2 rounded-lg text-left transition-colors ${
                     paymentMethod === 'razorpay'
-                      ? 'border-primary bg-blue-50'
+                      ? 'border-primary bg-primary/5'
                       : 'border-gray-200 hover:border-gray-300'
                   }`}
                 >
@@ -243,7 +243,7 @@ export const Booking = () => {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Total</span>
-                    <span className="text-xl font-bold text-primary">₹{calculateTotal()}</span>
+                    <span className="text-xl font-bold text-cta">₹{calculateTotal()}</span>
                   </div>
                 </div>
               </div>
