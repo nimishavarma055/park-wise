@@ -1,0 +1,271 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  user
+  owner
+  admin
+}
+
+enum ParkingType {
+  covered
+  open
+}
+
+enum ParkingStatus {
+  pending
+  approved
+  rejected
+}
+
+enum BookingType {
+  hourly
+  daily
+  monthly
+}
+
+enum BookingStatus {
+  active
+  cancelled
+  completed
+}
+
+enum PaymentStatus {
+  pending
+  completed
+  failed
+}
+
+enum PaymentMethod {
+  upi
+  razorpay
+}
+
+model User {
+  id           String    @id @default(uuid()) @db.Uuid
+  name         String    @db.VarChar(255)
+  email        String    @unique @db.VarChar(255)
+  phone        String    @db.VarChar(20)
+  role         UserRole  @default(user)
+  verified     Boolean   @default(false)
+  passwordHash String?   @map("password_hash") @db.VarChar(255)
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt    DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  parkingSpaces ParkingSpace[]
+  bookings      Booking[]
+  payments      Payment[]
+  reviews       Review[]
+  favorites     Favorite[]
+
+  @@index([email], map: "idx_users_email")
+  @@index([phone], map: "idx_users_phone")
+  @@index([role], map: "idx_users_role")
+  @@index([deletedAt], map: "idx_users_deleted_at")
+  @@map("users")
+}
+
+model ParkingSpace {
+  id            String        @id @default(uuid()) @db.Uuid
+  ownerId       String        @map("owner_id") @db.Uuid
+  name          String        @db.VarChar(255)
+  address       String        @db.Text
+  location      String        @db.Text // PostGIS GEOGRAPHY stored as text, use raw queries
+  latitude      Decimal       @db.Decimal(10, 8)
+  longitude     Decimal       @db.Decimal(11, 8)
+  type          ParkingType
+  vehicleType   String        @map("vehicle_type") @db.VarChar(10) // Enum: '2W', '4W', 'both'
+  description   String?       @db.Text
+  status        ParkingStatus @default(pending)
+  pricePerHour  Decimal?      @map("price_per_hour") @db.Decimal(10, 2)
+  pricePerDay   Decimal       @map("price_per_day") @db.Decimal(10, 2)
+  pricePerMonth Decimal       @map("price_per_month") @db.Decimal(10, 2)
+  createdAt     DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt     DateTime?     @map("deleted_at") @db.Timestamptz(6)
+
+  owner          User                  @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  availability   ParkingAvailability[]
+  timeSlots      ParkingTimeSlot?
+  amenities      ParkingAmenity[]
+  images         ParkingImage[]
+  bookings       Booking[]
+  reviews        Review[]
+  favorites      Favorite[]
+
+  @@index([ownerId], map: "idx_parking_spaces_owner_id")
+  @@index([status], map: "idx_parking_spaces_status")
+  @@index([type], map: "idx_parking_spaces_type")
+  @@index([vehicleType], map: "idx_parking_spaces_vehicle_type")
+  @@index([deletedAt], map: "idx_parking_spaces_deleted_at")
+  @@index([status, type], map: "idx_parking_spaces_status_type")
+  @@map("parking_spaces")
+}
+
+model ParkingAvailability {
+  id          String   @id @default(uuid()) @db.Uuid
+  parkingId   String   @map("parking_id") @db.Uuid
+  dayOfWeek   Int      @map("day_of_week")
+  startTime   DateTime @map("start_time") @db.Time
+  endTime     DateTime @map("end_time") @db.Time
+  isAvailable Boolean  @default(true) @map("is_available")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  parking ParkingSpace @relation(fields: [parkingId], references: [id], onDelete: Cascade)
+
+  @@unique([parkingId, dayOfWeek], map: "uk_parking_availability")
+  @@index([parkingId], map: "idx_parking_availability_parking_id")
+  @@index([dayOfWeek], map: "idx_parking_availability_day")
+  @@map("parking_availability")
+}
+
+model ParkingTimeSlot {
+  id             String       @id @default(uuid()) @db.Uuid
+  parkingId      String       @unique @map("parking_id") @db.Uuid
+  startHour      Int          @map("start_hour")
+  endHour        Int          @map("end_hour")
+  availableHours Int[]       @map("available_hours") @db.Integer
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  parking ParkingSpace @relation(fields: [parkingId], references: [id], onDelete: Cascade)
+
+  @@index([parkingId], map: "idx_parking_time_slots_parking_id")
+  @@map("parking_time_slots")
+}
+
+model ParkingAmenity {
+  id          String       @id @default(uuid()) @db.Uuid
+  parkingId   String       @map("parking_id") @db.Uuid
+  amenityName String       @map("amenity_name") @db.VarChar(100)
+  createdAt   DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  parking ParkingSpace @relation(fields: [parkingId], references: [id], onDelete: Cascade)
+
+  @@unique([parkingId, amenityName], map: "uk_parking_amenities")
+  @@index([parkingId], map: "idx_parking_amenities_parking_id")
+  @@index([amenityName], map: "idx_parking_amenities_name")
+  @@map("parking_amenities")
+}
+
+model ParkingImage {
+  id          String   @id @default(uuid()) @db.Uuid
+  parkingId   String   @map("parking_id") @db.Uuid
+  imageUrl    String   @map("image_url") @db.Text
+  displayOrder Int     @default(0) @map("display_order")
+  isPrimary   Boolean  @default(false) @map("is_primary")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  parking ParkingSpace @relation(fields: [parkingId], references: [id], onDelete: Cascade)
+
+  @@index([parkingId], map: "idx_parking_images_parking_id")
+  @@index([parkingId, isPrimary], map: "idx_parking_images_primary")
+  @@index([parkingId, displayOrder], map: "idx_parking_images_order")
+  @@map("parking_images")
+}
+
+model Booking {
+  id            String        @id @default(uuid()) @db.Uuid
+  userId        String        @map("user_id") @db.Uuid
+  parkingId     String        @map("parking_id") @db.Uuid
+  bookingType   BookingType   @map("booking_type")
+  startTime     DateTime      @map("start_time") @db.Timestamptz(6)
+  endTime       DateTime      @map("end_time") @db.Timestamptz(6)
+  totalAmount   Decimal       @map("total_amount") @db.Decimal(10, 2)
+  bookingStatus BookingStatus @default(active) @map("booking_status")
+  paymentStatus PaymentStatus @default(pending) @map("payment_status")
+  createdAt     DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt     DateTime?     @map("deleted_at") @db.Timestamptz(6)
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parking ParkingSpace @relation(fields: [parkingId], references: [id], onDelete: Cascade)
+  payments Payment[]
+  reviews Review[]
+
+  @@index([userId], map: "idx_bookings_user_id")
+  @@index([parkingId], map: "idx_bookings_parking_id")
+  @@index([bookingStatus], map: "idx_bookings_status")
+  @@index([paymentStatus], map: "idx_bookings_payment_status")
+  @@index([startTime], map: "idx_bookings_start_time")
+  @@index([endTime], map: "idx_bookings_end_time")
+  @@index([deletedAt], map: "idx_bookings_deleted_at")
+  @@map("bookings")
+}
+
+model Payment {
+  id                String        @id @default(uuid()) @db.Uuid
+  bookingId          String        @map("booking_id") @db.Uuid
+  userId             String        @map("user_id") @db.Uuid
+  amount             Decimal       @db.Decimal(10, 2)
+  paymentMethod      PaymentMethod @map("payment_method")
+  paymentStatus      PaymentStatus @default(pending) @map("payment_status")
+  razorpayOrderId    String?       @unique @map("razorpay_order_id") @db.VarChar(255)
+  razorpayPaymentId  String?       @unique @map("razorpay_payment_id") @db.VarChar(255)
+  razorpaySignature  String?       @map("razorpay_signature") @db.VarChar(255)
+  transactionId      String?       @map("transaction_id") @db.VarChar(255)
+  failureReason      String?       @map("failure_reason") @db.Text
+  createdAt          DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([bookingId], map: "idx_payments_booking_id")
+  @@index([userId], map: "idx_payments_user_id")
+  @@index([paymentStatus], map: "idx_payments_status")
+  @@index([razorpayOrderId], map: "idx_payments_razorpay_order_id")
+  @@index([razorpayPaymentId], map: "idx_payments_razorpay_payment_id")
+  @@map("payments")
+}
+
+model Review {
+  id         String    @id @default(uuid()) @db.Uuid
+  parkingId  String    @map("parking_id") @db.Uuid
+  userId     String    @map("user_id") @db.Uuid
+  bookingId  String    @unique @map("booking_id") @db.Uuid
+  rating     Int
+  reviewText String?   @map("review_text") @db.Text
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt  DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  parking ParkingSpace @relation(fields: [parkingId], references: [id], onDelete: Cascade)
+  user    User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  booking Booking      @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([parkingId], map: "idx_reviews_parking_id")
+  @@index([userId], map: "idx_reviews_user_id")
+  @@index([bookingId], map: "idx_reviews_booking_id")
+  @@index([rating], map: "idx_reviews_rating")
+  @@index([deletedAt], map: "idx_reviews_deleted_at")
+  @@map("reviews")
+}
+
+model Favorite {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  parkingId String    @map("parking_id") @db.Uuid
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  user    User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parking ParkingSpace @relation(fields: [parkingId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, parkingId], map: "uk_favorites_user_parking")
+  @@index([userId], map: "idx_favorites_user_id")
+  @@index([parkingId], map: "idx_favorites_parking_id")
+  @@index([deletedAt], map: "idx_favorites_deleted_at")
+  @@map("favorites")
+}
