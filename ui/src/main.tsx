@@ -1,13 +1,20 @@
-import { StrictMode } from 'react'
+import { StrictMode, useEffect } from 'react'
 import { createRoot } from 'react-dom/client'
+import { Provider } from 'react-redux'
 import './index.css'
 import App from './App.tsx'
+import { store } from './store/store'
 import { AuthProvider } from './context/AuthContext'
 import { ParkingProvider } from './context/ParkingContext'
 import { LocationProvider } from './context/LocationContext'
+import { loadUserFromStorage } from './store/slices/authSlice'
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
+const AppWithRedux = () => {
+  useEffect(() => {
+    store.dispatch(loadUserFromStorage());
+  }, []);
+
+  return (
     <AuthProvider>
       <ParkingProvider>
         <LocationProvider>
@@ -15,5 +22,13 @@ createRoot(document.getElementById('root')!).render(
         </LocationProvider>
       </ParkingProvider>
     </AuthProvider>
+  );
+};
+
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
+    <Provider store={store}>
+      <AppWithRedux />
+    </Provider>
   </StrictMode>,
 )

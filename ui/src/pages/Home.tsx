@@ -9,15 +9,13 @@ import { ViewToggle } from '../components/ViewToggle';
 import { MapView } from '../components/MapView';
 import { ParkingCard } from '../components/ParkingCard';
 import { SortDropdown } from '../components/SortDropdown';
-import { useParking } from '../context/ParkingContext';
 import { useLocation } from '../context/LocationContext';
 import { calculateDistance } from '../utils/geolocation';
 import { sortParkings, type SortOption } from '../utils/sorting';
-import type { Parking } from '../data/mockParkings';
+import { useSearchParkingsQuery, useGetParkingsQuery, type Parking } from '../store/api/parkingApi';
 
 export const Home = () => {
   const navigate = useNavigate();
-  const { parkings } = useParking();
   const { userLocation, setUserLocation } = useLocation();
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
@@ -38,12 +36,59 @@ export const Home = () => {
     amenities?: string[];
   }>({});
 
+  // Fetch parkings using RTK Query
+  const shouldSearch = userLocation && (userLocation.latitude && userLocation.longitude);
+  
+  const searchParams = shouldSearch ? {
+    latitude: userLocation.latitude,
+    longitude: userLocation.longitude,
+    radius: 10,
+    type: filters.type,
+    vehicleType: filters.vehicleType,
+    amenities: filters.amenities,
+    page: 1,
+    limit: 100,
+  } : undefined;
+
+  const { data: searchData, isLoading: isSearchLoading } = useSearchParkingsQuery(
+    searchParams!,
+    { skip: !shouldSearch }
+  );
+
+  const { data: listData, isLoading: isListLoading } = useGetParkingsQuery(
+    {
+      page: 1,
+      limit: 100,
+      type: filters.type,
+      status: 'approved',
+    },
+    { skip: !!shouldSearch }
+  );
+
+  const isLoading = isSearchLoading || isListLoading;
+  const parkingsData = shouldSearch ? searchData : listData;
+  
+  // Handle both response structures (with meta or flat)
+  const parkings = useMemo(() => {
+    if (!parkingsData) return [];
+    // Check if response has meta (backend structure) or is flat (frontend structure)
+    if (parkingsData.data && Array.isArray(parkingsData.data)) {
+      return parkingsData.data;
+    }
+    // Fallback: if data is directly an array (shouldn't happen, but safety check)
+    if (Array.isArray(parkingsData)) {
+      return parkingsData;
+    }
+    return [];
+  }, [parkingsData]);
+
   // Calculate distances when user location changes
   const parkingsWithDistance = useMemo(() => {
+    if (!Array.isArray(parkings) || parkings.length === 0) return [];
     if (!userLocation) return parkings;
     return parkings.map((parking) => ({
       ...parking,
-      distance: calculateDistance(
+      distance: parking.distance || calculateDistance(
         userLocation.latitude,
         userLocation.longitude,
         parking.latitude,
@@ -54,12 +99,12 @@ export const Home = () => {
 
   // Filter parkings
   const filteredParkings = useMemo(() => {
+    if (!Array.isArray(parkingsWithDistance)) return [];
     return parkingsWithDistance.filter((parking) => {
       // Search filter
       if (
         searchQuery &&
         !parking.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
-        !parking.location.toLowerCase().includes(searchQuery.toLowerCase()) &&
         !parking.address.toLowerCase().includes(searchQuery.toLowerCase())
       ) {
         return false;
@@ -85,8 +130,9 @@ export const Home = () => {
 
       // Amenities filter
       if (filters.amenities && filters.amenities.length > 0) {
-        const hasAllAmenities = filters.amenities.every((amenity) =>
-          parking.amenities.some((p) =>
+        const parkingAmenities = parking.amenities || [];
+        const hasAllAmenities = filters.amenities.every((amenity: string) =>
+          parkingAmenities.some((p: string) =>
             p.toLowerCase().includes(amenity.toLowerCase())
           )
         );
@@ -118,7 +164,7 @@ export const Home = () => {
   const allAmenities = useMemo(() => {
     const amenitySet = new Set<string>();
     parkingsWithDistance.forEach((parking) => {
-      parking.amenities.forEach((amenity) => {
+      (parking.amenities || []).forEach((amenity: string) => {
         amenitySet.add(amenity);
       });
     });
@@ -277,8 +323,16 @@ export const Home = () => {
           </div>
         </div>
 
+        {/* Loading State */}
+        {isLoading && (
+          <div className="text-center py-12">
+            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+            <p className="mt-4 text-gray-600">Loading parking spaces...</p>
+          </div>
+        )}
+
         {/* Results */}
-        {view === 'map' ? (
+        {!isLoading && view === 'map' ? (
           <div className="mb-6">
             <MapView
               parkings={sortedParkings}
@@ -310,7 +364,7 @@ export const Home = () => {
         )}
 
         {/* Empty State */}
-        {sortedParkings.length === 0 && (
+        {!isLoading && sortedParkings.length === 0 && (
           <Card variant="outlined" className="text-center py-16 my-8">
             <div className="max-w-md mx-auto">
               <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">

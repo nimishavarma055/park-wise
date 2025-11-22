@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { VehicleTypeString } from '../../../common/types/vehicle-type.enum';
 
 export class ParkingResponseDto {
   @ApiProperty()
@@ -19,8 +20,8 @@ export class ParkingResponseDto {
   @ApiProperty()
   type: string;
 
-  @ApiProperty()
-  vehicleType: string;
+  @ApiProperty({ enum: ['2W', '4W', 'both'] })
+  vehicleType: VehicleTypeString;
 
   @ApiPropertyOptional()
   description?: string;
@@ -51,6 +52,9 @@ export class ParkingResponseDto {
 
   @ApiProperty()
   ownerName: string;
+
+  @ApiPropertyOptional()
+  ownerVerified?: boolean;
 
   @ApiProperty()
   createdAt: Date;

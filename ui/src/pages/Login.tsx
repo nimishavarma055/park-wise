@@ -1,54 +1,36 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { MapPin, Mail, Lock, Smartphone } from 'lucide-react';
+import { MapPin } from 'lucide-react';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
 import { Card } from '../components/Card';
 import { useAuth } from '../context/AuthContext';
-import { mockUsers } from '../data/mockUsers';
 
 export const Login = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
   const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [otp, setOtp] = useState('');
-  const [showOtp, setShowOtp] = useState(false);
-  const [loginMethod, setLoginMethod] = useState<'email' | 'otp'>('email');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleEmailLogin = (e: React.FormEvent) => {
+  const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    const user = mockUsers.find((u) => u.email === email);
-    if (user) {
-      login(user);
+    setError('');
+    setLoading(true);
+    try {
+      await login(email, password);
       navigate('/');
-    } else {
-      alert('Invalid credentials');
-    }
-  };
-
-  const handleOtpRequest = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (phone) {
-      setShowOtp(true);
-    }
-  };
-
-  const handleOtpLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (otp === '123456') {
-      const user = mockUsers[0];
-      login(user);
-      navigate('/');
-    } else {
-      alert('Invalid OTP');
+    } catch (err: any) {
+      setError(err.message || 'Login failed. Please check your credentials.');
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleGoogleLogin = () => {
-    const user = mockUsers[0];
-    login(user);
-    navigate('/');
+    // TODO: Implement Google OAuth
+    alert('Google login coming soon!');
   };
 
   return (
@@ -63,95 +45,33 @@ export const Login = () => {
         </div>
 
         <Card className="p-8">
-          <div className="flex space-x-4 mb-6">
-            <button
-              onClick={() => {
-                setLoginMethod('email');
-                setShowOtp(false);
-              }}
-              className={`flex-1 py-2 rounded-lg font-medium transition-colors ${
-                loginMethod === 'email'
-                  ? 'bg-primary text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              Email
-            </button>
-            <button
-              onClick={() => {
-                setLoginMethod('otp');
-                setShowOtp(false);
-              }}
-              className={`flex-1 py-2 rounded-lg font-medium transition-colors ${
-                loginMethod === 'otp'
-                  ? 'bg-primary text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              OTP
-            </button>
-          </div>
-
-          {loginMethod === 'email' ? (
-            <form onSubmit={handleEmailLogin} className="space-y-4">
-              <Input
-                type="email"
-                label="Email"
-                placeholder="Enter your email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-              <Input
-                type="password"
-                label="Password"
-                placeholder="Enter your password"
-                required
-              />
-              <Button type="submit" className="w-full">
-                Login
-              </Button>
-            </form>
-          ) : (
-            <>
-              {!showOtp ? (
-                <form onSubmit={handleOtpRequest} className="space-y-4">
-                  <Input
-                    type="tel"
-                    label="Phone Number"
-                    placeholder="+91 9876543210"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    required
-                  />
-                  <Button type="submit" className="w-full">
-                    Send OTP
-                  </Button>
-                </form>
-              ) : (
-                <form onSubmit={handleOtpLogin} className="space-y-4">
-                  <Input
-                    type="text"
-                    label="Enter OTP"
-                    placeholder="123456"
-                    value={otp}
-                    onChange={(e) => setOtp(e.target.value)}
-                    required
-                  />
-                  <Button type="submit" className="w-full">
-                    Verify OTP
-                  </Button>
-                  <button
-                    type="button"
-                    onClick={() => setShowOtp(false)}
-                    className="text-sm text-primary hover:underline"
-                  >
-                    Change number
-                  </button>
-                </form>
-              )}
-            </>
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+              {error}
+            </div>
           )}
+          
+          <form onSubmit={handleEmailLogin} className="space-y-4">
+            <Input
+              type="email"
+              label="Email"
+              placeholder="Enter your email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+            <Input
+              type="password"
+              label="Password"
+              placeholder="Enter your password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? 'Logging in...' : 'Login'}
+            </Button>
+          </form>
 
           <div className="mt-6">
             <div className="relative">

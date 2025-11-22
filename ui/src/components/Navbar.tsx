@@ -43,7 +43,7 @@ export const Navbar = () => {
                 )}
                 <div className="flex items-center space-x-2 px-3 py-2 bg-gray-50 rounded-lg">
                   <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white font-semibold text-sm">
-                    {user?.name.charAt(0)}
+                    {user?.name?.charAt(0) || ''}
                   </div>
                   <span className="text-gray-700 font-medium">{user?.name}</span>
                 </div>

@@ -1,4 +1,4 @@
-import type { Parking } from '../data/mockParkings';
+import type { Parking } from '../store/api/parkingApi';
 
 export type SortOption = 
   | 'distance'

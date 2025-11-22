@@ -8,15 +8,16 @@ import { ParkingResponseDto } from './dto/parking-response.dto';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { RolesGuard } from '../../common/guards/roles.guard';
+import { Public } from '../../common/decorators/public.decorator';
 import { PaginatedResponse } from '../../common/dto/pagination.dto';
 
 @ApiTags('Parking')
-@ApiBearerAuth()
 @Controller('parking')
 export class ParkingController {
   constructor(private readonly parkingService: ParkingService) {}
 
   @Post()
+  @ApiBearerAuth()
   @UseGuards(RolesGuard)
   @Roles('owner', 'admin')
   @ApiOperation({ summary: 'Create a new parking space (Owner only)' })
@@ -29,6 +30,7 @@ export class ParkingController {
   }
 
   @Get()
+  @Public()
   @ApiOperation({ summary: 'Get all parking spaces with filters and pagination' })
   @ApiResponse({ status: 200, description: 'Parking spaces retrieved successfully' })
   async findAll(@Query() query: SearchParkingDto): Promise<PaginatedResponse<ParkingResponseDto>> {
@@ -36,6 +38,7 @@ export class ParkingController {
   }
 
   @Get('search')
+  @Public()
   @ApiOperation({ summary: 'Search nearby parking spaces using PostGIS' })
   @ApiResponse({ status: 200, description: 'Search results retrieved successfully' })
   async search(@Query() query: SearchParkingDto): Promise<PaginatedResponse<ParkingResponseDto>> {
@@ -43,6 +46,7 @@ export class ParkingController {
   }
 
   @Get(':id')
+  @Public()
   @ApiOperation({ summary: 'Get parking space by ID' })
   @ApiResponse({ status: 200, description: 'Parking space retrieved successfully', type: ParkingResponseDto })
   @ApiQuery({ name: 'lat', required: false, description: 'User latitude for distance calculation' })
@@ -59,6 +63,7 @@ export class ParkingController {
   }
 
   @Patch(':id')
+  @ApiBearerAuth()
   @UseGuards(RolesGuard)
   @Roles('owner', 'admin')
   @ApiOperation({ summary: 'Update parking space (Owner only)' })
@@ -72,6 +77,7 @@ export class ParkingController {
   }
 
   @Delete(':id')
+  @ApiBearerAuth()
   @UseGuards(RolesGuard)
   @Roles('owner', 'admin')
   @ApiOperation({ summary: 'Delete parking space (soft delete, Owner only)' })

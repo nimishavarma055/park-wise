@@ -14,40 +14,54 @@ enum UserRole {
   user
   owner
   admin
+
+  @@map("user_role")
 }
 
 enum ParkingType {
   covered
   open
+
+  @@map("parking_type")
 }
 
 enum ParkingStatus {
   pending
   approved
   rejected
+
+  @@map("parking_status")
 }
 
 enum BookingType {
   hourly
   daily
   monthly
+
+  @@map("booking_type")
 }
 
 enum BookingStatus {
   active
   cancelled
   completed
+
+  @@map("booking_status")
 }
 
 enum PaymentStatus {
   pending
   completed
   failed
+
+  @@map("payment_status")
 }
 
 enum PaymentMethod {
   upi
   razorpay
+
+  @@map("payment_method")
 }
 
 model User {
@@ -84,7 +98,7 @@ model ParkingSpace {
   latitude      Decimal       @db.Decimal(10, 8)
   longitude     Decimal       @db.Decimal(11, 8)
   type          ParkingType
-  vehicleType   String        @map("vehicle_type") @db.VarChar(10) // Enum: '2W', '4W', 'both'
+  vehicleType   String        @map("vehicle_type") @db.VarChar(10) // Database enum: '2W', '4W', 'both' - stored as string
   description   String?       @db.Text
   status        ParkingStatus @default(pending)
   pricePerHour  Decimal?      @map("price_per_hour") @db.Decimal(10, 2)

@@ -2,6 +2,7 @@ import { IsNumber, IsOptional, IsEnum, IsArray, IsString, Min, Max } from 'class
 import { Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { PaginationDto } from '../../../common/dto/pagination.dto';
+import { VehicleTypeString } from '../../../common/types/vehicle-type.enum';
 
 export class SearchParkingDto extends PaginationDto {
   @ApiPropertyOptional({ example: 28.6139, description: 'Latitude for nearby search' })
@@ -36,7 +37,7 @@ export class SearchParkingDto extends PaginationDto {
   @ApiPropertyOptional({ enum: ['2W', '4W', 'both'] })
   @IsOptional()
   @IsEnum(['2W', '4W', 'both'])
-  vehicleType?: '2W' | '4W' | 'both';
+  vehicleType?: VehicleTypeString;
 
   @ApiPropertyOptional({ example: 0, description: 'Minimum price per day' })
   @IsOptional()
@@ -62,5 +63,15 @@ export class SearchParkingDto extends PaginationDto {
   @IsOptional()
   @IsEnum(['distance', 'price-low', 'price-high'])
   sortBy?: 'distance' | 'price-low' | 'price-high';
+
+  @ApiPropertyOptional({ enum: ['pending', 'approved', 'rejected'], default: 'approved' })
+  @IsOptional()
+  @IsEnum(['pending', 'approved', 'rejected'])
+  status?: 'pending' | 'approved' | 'rejected';
+
+  @ApiPropertyOptional({ description: 'Filter by owner ID' })
+  @IsOptional()
+  @IsString()
+  ownerId?: string;
 }
 

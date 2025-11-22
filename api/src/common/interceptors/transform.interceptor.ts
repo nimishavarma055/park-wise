@@ -20,11 +20,30 @@ export class TransformInterceptor<T> implements NestInterceptor<T, Response<T>> 
     next: CallHandler,
   ): Observable<Response<T>> {
     return next.handle().pipe(
-      map((data) => ({
-        statusCode: context.switchToHttp().getResponse().statusCode,
-        data,
-        timestamp: new Date().toISOString(),
-      })),
+      map((data) => {
+        // If the response is already a PaginatedResponse (has both 'data' and 'meta' properties),
+        // spread it instead of wrapping it in another 'data' field
+        if (
+          data &&
+          typeof data === 'object' &&
+          'data' in data &&
+          'meta' in data &&
+          Array.isArray(data.data)
+        ) {
+          return {
+            statusCode: context.switchToHttp().getResponse().statusCode,
+            ...data,
+            timestamp: new Date().toISOString(),
+          } as any;
+        }
+
+        // For other responses, wrap in the standard format
+        return {
+          statusCode: context.switchToHttp().getResponse().statusCode,
+          data,
+          timestamp: new Date().toISOString(),
+        };
+      }),
     );
   }
 }

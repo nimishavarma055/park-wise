@@ -6,10 +6,12 @@ import { Card } from '../components/Card';
 import { Input } from '../components/Input';
 import { MapPlaceholder } from '../components/MapPlaceholder';
 import { useAuth } from '../context/AuthContext';
+import { useCreateParkingMutation } from '../store/api/parkingApi';
 
 export const ListParking = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const [createParking, { isLoading: isCreating }] = useCreateParkingMutation();
   const [formData, setFormData] = useState({
     name: '',
     location: '',
@@ -32,14 +34,35 @@ export const ListParking = () => {
     sunday: true,
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) {
       navigate('/login');
       return;
     }
-    alert('Parking listing submitted for approval!');
-    navigate('/my-parking');
+
+    try {
+      // Get coordinates from location (simplified - in production, use geocoding)
+      const [latitude, longitude] = formData.location.split(',').map(Number);
+      
+      await createParking({
+        name: formData.name,
+        address: formData.address,
+        latitude: latitude || 0,
+        longitude: longitude || 0,
+        type: formData.type,
+        vehicleType: formData.vehicleType,
+        description: formData.description,
+        pricePerDay: parseFloat(formData.pricePerDay),
+        pricePerMonth: parseFloat(formData.pricePerMonth),
+        pricePerHour: formData.pricePerHour ? parseFloat(formData.pricePerHour) : undefined,
+      }).unwrap();
+
+      alert('Parking listing submitted for approval!');
+      navigate('/my-parking');
+    } catch (error: any) {
+      alert(error?.data?.message || 'Failed to create parking listing. Please try again.');
+    }
   };
 
   if (!user) {
@@ -221,8 +244,12 @@ export const ListParking = () => {
             >
               Cancel
             </Button>
-            <Button type="submit" variant="primary">
-              Submit for Approval
+            <Button 
+              type="submit" 
+              variant="primary"
+              disabled={isCreating}
+            >
+              {isCreating ? 'Submitting...' : 'Submit for Approval'}
             </Button>
           </div>
         </form>

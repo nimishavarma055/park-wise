@@ -1,7 +1,7 @@
 import { Camera, Zap, Shield, Clock, Car, Wifi } from 'lucide-react';
 
 interface AmenityIconsProps {
-  amenities: string[];
+  amenities?: string[];
   className?: string;
 }
 
@@ -14,7 +14,7 @@ const amenityIconMap: Record<string, { icon: React.ComponentType<{ size?: number
   'WiFi': { icon: Wifi, color: 'text-gray-600' },
 };
 
-export const AmenityIcons = ({ amenities, className = '' }: AmenityIconsProps) => {
+export const AmenityIcons = ({ amenities = [], className = '' }: AmenityIconsProps) => {
   const getIcon = (amenity: string) => {
     const normalized = amenity.toLowerCase();
     for (const [key, value] of Object.entries(amenityIconMap)) {
@@ -24,6 +24,14 @@ export const AmenityIcons = ({ amenities, className = '' }: AmenityIconsProps) =
     }
     return null;
   };
+
+  if (!amenities || amenities.length === 0) {
+    return (
+      <div className={`text-gray-500 text-sm ${className}`}>
+        No amenities listed
+      </div>
+    );
+  }
 
   return (
     <div className={`flex flex-wrap items-center gap-3 ${className}`}>

@@ -5,17 +5,27 @@ import { Card } from '../components/Card';
 import { TabSwitch } from '../components/TabSwitch';
 import { Button } from '../components/Button';
 import { useAuth } from '../context/AuthContext';
-import { useParking } from '../context/ParkingContext';
+import { useGetBookingsQuery } from '../store/api/bookingsApi';
+import { useGetParkingsQuery } from '../store/api/parkingApi';
 
 export const MyParking = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { bookings, parkings, getBookingsByUserId } = useParking();
   const [activeTab, setActiveTab] = useState<'bookings' | 'listings'>('bookings');
+  
+  const { data: bookingsData, isLoading: isLoadingBookings } = useGetBookingsQuery(
+    { page: 1, limit: 100 },
+    { skip: !user }
+  );
+  
+  const { data: parkingsData, isLoading: isLoadingParkings } = useGetParkingsQuery(
+    { page: 1, limit: 100, ownerId: user?.id },
+    { skip: !user || activeTab !== 'listings' }
+  );
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-soft flex items-center justify-center">
         <Card className="p-8 text-center max-w-md">
           <p className="text-gray-600 mb-4">Please login to view your parking.</p>
           <Button onClick={() => navigate('/login')}>Login</Button>
@@ -24,8 +34,8 @@ export const MyParking = () => {
     );
   }
 
-  const userBookings = getBookingsByUserId(user.id);
-  const userListings = parkings.filter((p) => p.ownerId === user.id);
+  const userBookings = bookingsData?.data || [];
+  const userListings = parkingsData?.data || [];
 
   const getStatusColor = (status: string) => {
     switch (status) {

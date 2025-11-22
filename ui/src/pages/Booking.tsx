@@ -4,16 +4,17 @@ import { Button } from '../components/Button';
 import { Card } from '../components/Card';
 import { Input } from '../components/Input';
 import { TimeSlotPicker } from '../components/TimeSlotPicker';
-import { useParking } from '../context/ParkingContext';
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useGetParkingByIdQuery } from '../store/api/parkingApi';
+import { useCreateBookingMutation } from '../store/api/bookingsApi';
 
 export const Booking = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { getParkingById } = useParking();
   const { user } = useAuth();
-  const parking = id ? getParkingById(id) : undefined;
+  const { data: parking, isLoading } = useGetParkingByIdQuery(id || '', { skip: !id });
+  const [createBooking, { isLoading: isCreatingBooking }] = useCreateBookingMutation();
 
   const [duration, setDuration] = useState<'hourly' | 'daily' | 'monthly'>('daily');
   const [startDate, setStartDate] = useState('');
@@ -23,9 +24,20 @@ export const Booking = () => {
   const [paymentMethod, setPaymentMethod] = useState<'upi' | 'razorpay'>('upi');
   const [bookingConfirmed, setBookingConfirmed] = useState(false);
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-soft flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+          <p className="mt-4 text-gray-600">Loading booking details...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (!parking) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-soft flex items-center justify-center">
         <div className="text-center">
           <p className="text-gray-500 text-lg">Parking space not found</p>
           <Button onClick={() => navigate('/')} className="mt-4">
@@ -47,15 +59,47 @@ export const Booking = () => {
     return parking.pricePerMonth;
   };
 
-  const handleConfirm = () => {
-    if (!user) {
+  const handleConfirm = async () => {
+    if (!user || !parking) {
       navigate('/login');
       return;
     }
-    setBookingConfirmed(true);
-    setTimeout(() => {
-      navigate('/my-parking');
-    }, 2000);
+
+    try {
+      // Calculate start and end times based on duration
+      let startTime: string;
+      let endTime: string;
+
+      if (duration === 'hourly') {
+        const now = new Date();
+        startTime = now.toISOString();
+        const end = new Date(now.getTime() + hours * 60 * 60 * 1000);
+        endTime = end.toISOString();
+      } else if (duration === 'daily') {
+        startTime = startDate ? new Date(startDate).toISOString() : new Date().toISOString();
+        endTime = endDate ? new Date(endDate).toISOString() : new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+      } else {
+        // Monthly
+        const now = new Date();
+        startTime = now.toISOString();
+        const end = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+        endTime = end.toISOString();
+      }
+
+      await createBooking({
+        parkingId: parking.id,
+        bookingType: duration,
+        startTime,
+        endTime,
+      }).unwrap();
+
+      setBookingConfirmed(true);
+      setTimeout(() => {
+        navigate('/my-parking');
+      }, 2000);
+    } catch (error: any) {
+      alert(error?.data?.message || 'Failed to create booking. Please try again.');
+    }
   };
 
   if (bookingConfirmed) {
@@ -247,8 +291,13 @@ export const Booking = () => {
                   </div>
                 </div>
               </div>
-              <Button variant="primary" className="w-full" onClick={handleConfirm}>
-                Confirm Booking
+              <Button 
+                variant="primary" 
+                className="w-full" 
+                onClick={handleConfirm}
+                disabled={isCreatingBooking}
+              >
+                {isCreatingBooking ? 'Creating Booking...' : 'Confirm Booking'}
               </Button>
             </Card>
           </div>

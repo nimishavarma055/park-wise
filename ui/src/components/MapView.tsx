@@ -1,5 +1,5 @@
 import { MapPin, Navigation } from 'lucide-react';
-import type { Parking } from '../data/mockParkings';
+import type { Parking } from '../store/api/parkingApi';
 import type { UserLocation } from '../utils/geolocation';
 import { Card } from './Card';
 

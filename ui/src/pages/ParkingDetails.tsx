@@ -6,19 +6,29 @@ import { ImageCarousel } from '../components/ImageCarousel';
 import { TimeSlotPicker } from '../components/TimeSlotPicker';
 import { DistanceBadge } from '../components/DistanceBadge';
 import { AmenityIcons } from '../components/AmenityIcons';
-import { useParking } from '../context/ParkingContext';
 import { useState } from 'react';
+import { useGetParkingByIdQuery } from '../store/api/parkingApi';
 
 export const ParkingDetails = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { getParkingById } = useParking();
-  const parking = id ? getParkingById(id) : undefined;
+  const { data: parking, isLoading } = useGetParkingByIdQuery(id || '', { skip: !id });
   const [priceType, setPriceType] = useState<'hourly' | 'daily' | 'monthly'>('daily');
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-soft flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+          <p className="mt-4 text-gray-600">Loading parking details...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!parking) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-soft flex items-center justify-center">
         <div className="text-center">
           <p className="text-gray-500 text-lg">Parking space not found</p>
           <Button onClick={() => navigate('/')} className="mt-4">
@@ -40,7 +50,7 @@ export const ParkingDetails = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
-            <ImageCarousel images={parking.images} />
+            <ImageCarousel images={parking.images || []} />
             
             <Card variant="elevated" className="p-8 mt-6">
               <div className="flex items-start justify-between mb-6">
@@ -128,11 +138,11 @@ export const ParkingDetails = () => {
                 </h2>
                 <div className="flex items-center space-x-4 p-4 bg-gray-50 rounded-xl border border-gray-200">
                   <div className="w-16 h-16 bg-gradient-to-br from-primary to-cta rounded-full flex items-center justify-center text-white font-bold text-xl shadow-md">
-                    {parking.ownerName.charAt(0)}
+                    {(parking.ownerName || 'O').charAt(0).toUpperCase()}
                   </div>
                   <div>
                     <div className="flex items-center space-x-2 mb-1">
-                      <span className="font-bold text-lg text-gray-900">{parking.ownerName}</span>
+                      <span className="font-bold text-lg text-gray-900">{parking.ownerName || 'Owner'}</span>
                       {parking.ownerVerified && (
                         <CheckCircle size={20} className="text-green-600" />
                       )}

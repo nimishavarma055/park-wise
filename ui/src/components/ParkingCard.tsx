@@ -5,7 +5,7 @@ import { Button } from './Button';
 import { DistanceBadge } from './DistanceBadge';
 import { AmenityIcons } from './AmenityIcons';
 import { TimeSlotPicker } from './TimeSlotPicker';
-import type { Parking } from '../data/mockParkings';
+import type { Parking } from '../store/api/parkingApi';
 import { useState } from 'react';
 
 interface ParkingCardProps {
@@ -37,7 +37,7 @@ export const ParkingCard = ({ parking, showTimeSlots = false }: ParkingCardProps
     >
       <div className="relative h-48 overflow-hidden">
         <img
-          src={parking.images[0] || 'https://via.placeholder.com/400x300?text=Parking'}
+          src={parking.images?.[0] || 'https://via.placeholder.com/400x300?text=Parking'}
           alt={parking.name}
           className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
           onError={(e) => {

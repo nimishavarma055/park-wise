@@ -15,7 +15,8 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
     "db:apply-schema": "node scripts/apply-schema.js",
-    "db:create-enums": "node scripts/create-enums.js"
+    "db:create-enums": "node scripts/create-enums.js",
+    "db:seed": "node scripts/insert-sample-data.js"
   },
   "keywords": [],
   "author": "",

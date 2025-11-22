@@ -5,33 +5,50 @@ import { Button } from '../components/Button';
 import { Input } from '../components/Input';
 import { Card } from '../components/Card';
 import { useAuth } from '../context/AuthContext';
-import { mockUsers } from '../data/mockUsers';
 
 export const Signup = () => {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { signup } = useAuth();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     phone: '',
     password: '',
     confirmPassword: '',
+    role: 'user' as 'user' | 'owner' | 'admin',
   });
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
+    
     if (formData.password !== formData.confirmPassword) {
-      alert('Passwords do not match');
+      setError('Passwords do not match');
       return;
     }
-    const newUser = {
-      ...mockUsers[0],
-      name: formData.name,
-      email: formData.email,
-      phone: formData.phone,
-    };
-    login(newUser);
-    navigate('/');
+    
+    if (formData.password.length < 6) {
+      setError('Password must be at least 6 characters');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await signup(
+        formData.name,
+        formData.email,
+        formData.phone,
+        formData.password,
+        formData.role
+      );
+      navigate('/');
+    } catch (err: any) {
+      setError(err.message || 'Signup failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -47,6 +64,13 @@ export const Signup = () => {
 
         <Card className="p-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">Create Account</h2>
+          
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+              {error}
+            </div>
+          )}
+          
           <form onSubmit={handleSubmit} className="space-y-4">
             <Input
               type="text"
@@ -88,8 +112,38 @@ export const Signup = () => {
               onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
               required
             />
-            <Button type="submit" className="w-full">
-              Sign Up
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Account Type
+              </label>
+              <div className="flex space-x-4">
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="role"
+                    value="user"
+                    checked={formData.role === 'user'}
+                    onChange={(e) => setFormData({ ...formData, role: e.target.value as 'user' | 'owner' | 'admin' })}
+                    className="mr-2"
+                  />
+                  <span className="text-sm text-gray-700">User</span>
+                </label>
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="role"
+                    value="owner"
+                    checked={formData.role === 'owner'}
+                    onChange={(e) => setFormData({ ...formData, role: e.target.value as 'user' | 'owner' | 'admin' })}
+                    className="mr-2"
+                  />
+                  <span className="text-sm text-gray-700">Owner</span>
+                </label>
+              </div>
+            </div>
+            
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? 'Creating account...' : 'Sign Up'}
             </Button>
           </form>
 
@@ -105,9 +159,8 @@ export const Signup = () => {
 
             <button
               onClick={() => {
-                const user = mockUsers[0];
-                login(user);
-                navigate('/');
+                // TODO: Implement Google OAuth
+                alert('Google signup coming soon!');
               }}
               className="mt-4 w-full flex items-center justify-center space-x-2 border-2 border-gray-300 rounded-lg py-3 hover:bg-gray-50 transition-colors"
             >

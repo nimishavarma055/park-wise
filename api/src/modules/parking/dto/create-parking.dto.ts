@@ -1,6 +1,7 @@
 import { IsString, IsNumber, IsEnum, IsOptional, IsArray, Min, Max, IsDecimal } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { VehicleTypeString } from '../../../common/types/vehicle-type.enum';
 
 export class CreateParkingDto {
   @ApiProperty({ example: 'Downtown Parking Space' })
@@ -31,7 +32,7 @@ export class CreateParkingDto {
 
   @ApiProperty({ enum: ['2W', '4W', 'both'] })
   @IsEnum(['2W', '4W', 'both'])
-  vehicleType: '2W' | '4W' | 'both';
+  vehicleType: VehicleTypeString;
 
   @ApiPropertyOptional({ example: 'Spacious parking space in downtown area' })
   @IsOptional()

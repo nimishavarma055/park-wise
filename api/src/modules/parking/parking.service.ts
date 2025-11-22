@@ -5,6 +5,7 @@ import { UpdateParkingDto } from './dto/update-parking.dto';
 import { SearchParkingDto } from './dto/search-parking.dto';
 import { ParkingResponseDto } from './dto/parking-response.dto';
 import { PaginatedResponse } from '../../common/dto/pagination.dto';
+import { VehicleTypeString } from '../../common/types/vehicle-type.enum';
 
 @Injectable()
 export class ParkingService {
@@ -40,15 +41,87 @@ export class ParkingService {
 
     const parkingId = (result as Array<{ id: string }>)[0].id;
 
-    // Get the created parking with relations
-    const parking = await this.prisma.parkingSpace.findUnique({
-      where: { id: parkingId },
-      include: {
-        owner: true,
-        amenities: true,
-        images: true,
-      },
-    });
+    // Get the created parking with relations (exclude location field)
+    let parking;
+    try {
+      parking = await this.prisma.parkingSpace.findUnique({
+        where: { id: parkingId },
+        select: {
+          id: true,
+          ownerId: true,
+          name: true,
+          address: true,
+          latitude: true,
+          longitude: true,
+          type: true,
+          vehicleType: true,
+          description: true,
+          status: true,
+          pricePerHour: true,
+          pricePerDay: true,
+          pricePerMonth: true,
+          createdAt: true,
+          updatedAt: true,
+          deletedAt: true,
+          owner: true,
+          amenities: true,
+          images: true,
+        },
+      });
+    } catch (error: any) {
+      // If related tables don't exist or vehicleType enum conversion fails, use raw SQL
+      if (error.message?.includes('parking_amenities') || 
+          error.message?.includes('parking_images') ||
+          error.message?.includes('vehicleType') ||
+          error.message?.includes('vehicle_type')) {
+        
+        // Use raw SQL to handle enum conversion
+        const rawQuery = `
+          SELECT 
+            ps.id,
+            ps.owner_id as "ownerId",
+            ps.name,
+            ps.address,
+            ps.latitude,
+            ps.longitude,
+            ps.type,
+            ps.vehicle_type::text as "vehicleType",
+            ps.description,
+            ps.status,
+            ps.price_per_hour as "pricePerHour",
+            ps.price_per_day as "pricePerDay",
+            ps.price_per_month as "pricePerMonth",
+            ps.created_at as "createdAt",
+            ps.updated_at as "updatedAt",
+            ps.deleted_at as "deletedAt"
+          FROM parking_spaces ps
+          WHERE ps.id = '${parkingId.replace(/'/g, "''")}'
+        `;
+        
+        const rawResults = await this.prisma.$queryRawUnsafe(rawQuery);
+        const rawParking = (rawResults as any[])[0];
+        
+        if (!rawParking) {
+          throw new NotFoundException('Parking space not found');
+        }
+        
+        // Fetch owner separately
+        const owner = await this.prisma.user.findUnique({
+          where: { id: rawParking.ownerId },
+          select: { id: true, name: true, email: true },
+        });
+        
+        parking = {
+          ...rawParking,
+          vehicleType: rawParking.vehicleType as VehicleTypeString,
+          owner: owner || null,
+          amenities: [],
+          images: [],
+        } as any;
+      } else {
+        throw error;
+      }
+    }
 
     // Add amenities, images, and time slots if provided
     if (amenities && amenities.length > 0) {
@@ -82,27 +155,104 @@ export class ParkingService {
       });
     }
 
-    // Fetch updated parking with all relations
-    const updatedParking = await this.prisma.parkingSpace.findUnique({
-      where: { id: parkingId },
-      include: {
-        owner: true,
-        amenities: true,
-        images: true,
-      },
-    });
+    // Fetch updated parking with all relations (exclude location field)
+    let updatedParking;
+    try {
+      updatedParking = await this.prisma.parkingSpace.findUnique({
+        where: { id: parkingId },
+        select: {
+          id: true,
+          ownerId: true,
+          name: true,
+          address: true,
+          latitude: true,
+          longitude: true,
+          type: true,
+          vehicleType: true,
+          description: true,
+          status: true,
+          pricePerHour: true,
+          pricePerDay: true,
+          pricePerMonth: true,
+          createdAt: true,
+          updatedAt: true,
+          deletedAt: true,
+          owner: true,
+          amenities: true,
+          images: true,
+        },
+      });
+    } catch (error: any) {
+      // If related tables don't exist or vehicleType enum conversion fails, use raw SQL
+      if (error.message?.includes('parking_amenities') || 
+          error.message?.includes('parking_images') ||
+          error.message?.includes('vehicleType') ||
+          error.message?.includes('vehicle_type')) {
+        
+        // Use raw SQL to handle enum conversion
+        const rawQuery = `
+          SELECT 
+            ps.id,
+            ps.owner_id as "ownerId",
+            ps.name,
+            ps.address,
+            ps.latitude,
+            ps.longitude,
+            ps.type,
+            ps.vehicle_type::text as "vehicleType",
+            ps.description,
+            ps.status,
+            ps.price_per_hour as "pricePerHour",
+            ps.price_per_day as "pricePerDay",
+            ps.price_per_month as "pricePerMonth",
+            ps.created_at as "createdAt",
+            ps.updated_at as "updatedAt",
+            ps.deleted_at as "deletedAt"
+          FROM parking_spaces ps
+          WHERE ps.id = '${parkingId.replace(/'/g, "''")}'
+        `;
+        
+        const rawResults = await this.prisma.$queryRawUnsafe(rawQuery);
+        const rawParking = (rawResults as any[])[0];
+        
+        if (!rawParking) {
+          throw new NotFoundException('Parking space not found');
+        }
+        
+        // Fetch owner separately
+        const owner = await this.prisma.user.findUnique({
+          where: { id: rawParking.ownerId },
+          select: { id: true, name: true, email: true },
+        });
+        
+        updatedParking = {
+          ...rawParking,
+          vehicleType: rawParking.vehicleType as VehicleTypeString,
+          owner: owner || null,
+          amenities: [],
+          images: [],
+        } as any;
+      } else {
+        throw error;
+      }
+    }
 
     return this.mapToResponseDto(updatedParking);
   }
 
   async findAll(query: SearchParkingDto): Promise<PaginatedResponse<ParkingResponseDto>> {
-    const { page = 1, limit = 10, latitude, longitude, radius = 10, ...filters } = query;
+    const { page = 1, limit = 10, latitude, longitude, radius = 10, status = 'approved', ownerId, ...filters } = query;
     const skip = (page - 1) * limit;
 
     let where: any = {
       deletedAt: null,
-      status: 'approved',
+      status: status,
     };
+
+    // Apply owner filter if provided
+    if (ownerId) {
+      where.ownerId = ownerId;
+    }
 
     // Apply filters
     if (filters.type) {
@@ -138,11 +288,12 @@ export class ParkingService {
         FROM parking_spaces ps
         WHERE 
           ps.deleted_at IS NULL
-          AND ps.status = 'approved'
+          AND ps.status = '${status}'
           ${filters.type ? `AND ps.type = '${filters.type}'` : ''}
           ${filters.vehicleType ? `AND ps.vehicle_type = '${filters.vehicleType}'` : ''}
           ${filters.minPrice !== undefined ? `AND ps.price_per_day >= ${filters.minPrice}` : ''}
           ${filters.maxPrice !== undefined ? `AND ps.price_per_day <= ${filters.maxPrice}` : ''}
+          ${ownerId ? `AND ps.owner_id = '${ownerId}'` : ''}
           AND ST_DWithin(
             ps.location::geography,
             ST_SetSRID(ST_MakePoint(${longitude}, ${latitude}), 4326)::geography,
@@ -155,18 +306,69 @@ export class ParkingService {
       const results = await this.prisma.$queryRawUnsafe(query);
       parkings = results as any[];
 
-      // Get full parking data with relations
+      // Get full parking data with relations (exclude location field as it's PostGIS geography)
       const parkingIds = parkings.map((p) => p.id);
-      const fullParkings = await this.prisma.parkingSpace.findMany({
-        where: {
-          id: { in: parkingIds },
-        },
-        include: {
-          owner: true,
-          amenities: true,
-          images: true,
-        },
-      });
+      let fullParkings;
+      try {
+        fullParkings = await this.prisma.parkingSpace.findMany({
+          where: {
+            id: { in: parkingIds },
+          },
+          select: {
+            id: true,
+            ownerId: true,
+            name: true,
+            address: true,
+            latitude: true,
+            longitude: true,
+            type: true,
+            vehicleType: true,
+            description: true,
+            status: true,
+            pricePerHour: true,
+            pricePerDay: true,
+            pricePerMonth: true,
+            createdAt: true,
+            updatedAt: true,
+            deletedAt: true,
+            owner: true,
+            amenities: true,
+            images: true,
+          },
+        });
+      } catch (error: any) {
+        // If related tables don't exist, fetch without relations
+        if (error.message?.includes('parking_amenities') || error.message?.includes('parking_images')) {
+          fullParkings = await this.prisma.parkingSpace.findMany({
+            where: {
+              id: { in: parkingIds },
+            },
+            select: {
+              id: true,
+              ownerId: true,
+              name: true,
+              address: true,
+              latitude: true,
+              longitude: true,
+              type: true,
+              vehicleType: true,
+              description: true,
+              status: true,
+              pricePerHour: true,
+              pricePerDay: true,
+              pricePerMonth: true,
+              createdAt: true,
+              updatedAt: true,
+              deletedAt: true,
+              owner: true,
+            },
+          });
+          // Add empty arrays for missing relations
+          fullParkings = fullParkings.map((p: any) => ({ ...p, amenities: [], images: [] }));
+        } else {
+          throw error;
+        }
+      }
 
       // Merge distance data
       parkings = fullParkings.map((p) => {
@@ -183,17 +385,112 @@ export class ParkingService {
         orderBy = { createdAt: 'desc' };
       }
 
-      parkings = await this.prisma.parkingSpace.findMany({
-        where,
-        include: {
-          owner: true,
-          amenities: true,
-          images: true,
-        },
-        orderBy,
-        skip,
-        take: limit,
-      });
+      try {
+        parkings = await this.prisma.parkingSpace.findMany({
+          where,
+          select: {
+            id: true,
+            ownerId: true,
+            name: true,
+            address: true,
+            latitude: true,
+            longitude: true,
+            type: true,
+            vehicleType: true,
+            description: true,
+            status: true,
+            pricePerHour: true,
+            pricePerDay: true,
+            pricePerMonth: true,
+            createdAt: true,
+            updatedAt: true,
+            deletedAt: true,
+            owner: true,
+            amenities: true,
+            images: true,
+          },
+          orderBy,
+          skip,
+          take: limit,
+        });
+      } catch (error: any) {
+        // If related tables don't exist or vehicleType enum conversion fails, use raw SQL
+        if (error.message?.includes('parking_amenities') || 
+            error.message?.includes('parking_images') || 
+            error.message?.includes('vehicleType') ||
+            error.message?.includes('vehicle_type')) {
+          
+          // Build WHERE clause with proper escaping
+          const whereConditions: string[] = ["ps.deleted_at IS NULL", `ps.status = '${status.replace(/'/g, "''")}'`];
+          
+          if (filters.type) {
+            whereConditions.push(`ps.type = '${filters.type.replace(/'/g, "''")}'`);
+          }
+          if (filters.vehicleType) {
+            whereConditions.push(`ps.vehicle_type = '${filters.vehicleType.replace(/'/g, "''")}'`);
+          }
+          if (ownerId) {
+            whereConditions.push(`ps.owner_id = '${ownerId.replace(/'/g, "''")}'`);
+          }
+          
+          // Build ORDER BY
+          let orderByClause = "ps.created_at DESC";
+          if (filters.sortBy === 'price-low') {
+            orderByClause = "ps.price_per_day ASC";
+          } else if (filters.sortBy === 'price-high') {
+            orderByClause = "ps.price_per_day DESC";
+          }
+          
+          // Use raw SQL to handle enum conversion - cast enum to text
+          const rawQuery = `
+            SELECT 
+              ps.id,
+              ps.owner_id as "ownerId",
+              ps.name,
+              ps.address,
+              ps.latitude,
+              ps.longitude,
+              ps.type,
+              ps.vehicle_type::text as "vehicleType",
+              ps.description,
+              ps.status,
+              ps.price_per_hour as "pricePerHour",
+              ps.price_per_day as "pricePerDay",
+              ps.price_per_month as "pricePerMonth",
+              ps.created_at as "createdAt",
+              ps.updated_at as "updatedAt",
+              ps.deleted_at as "deletedAt"
+            FROM parking_spaces ps
+            WHERE ${whereConditions.join(' AND ')}
+            ORDER BY ${orderByClause}
+            LIMIT ${limit} OFFSET ${skip}
+          `;
+          
+          const rawResults = await this.prisma.$queryRawUnsafe(rawQuery);
+          parkings = rawResults as any[];
+          
+          // Fetch owner data separately
+          const ownerIds = [...new Set(parkings.map((p: any) => p.ownerId))];
+          const owners = await this.prisma.user.findMany({
+            where: { id: { in: ownerIds } },
+            select: { id: true, name: true, email: true },
+          });
+          
+          // Merge owner data and add empty arrays for missing relations
+          parkings = parkings.map((p: any) => {
+            const owner = owners.find((o) => o.id === p.ownerId);
+            return {
+              ...p,
+              vehicleType: (p.vehicleType || p.vehicle_type) as VehicleTypeString,
+              owner: owner || null,
+              amenities: [],
+              images: [],
+            };
+          });
+        } else {
+          throw error;
+        }
+      }
     }
 
     // Get total count
@@ -204,18 +501,92 @@ export class ParkingService {
   }
 
   async findOne(id: string, userId?: string, userLat?: number, userLon?: number): Promise<ParkingResponseDto> {
-    const parking = await this.prisma.parkingSpace.findFirst({
-      where: {
-        id,
-        deletedAt: null,
-      },
-      include: {
-        owner: true,
-        amenities: true,
-        images: true,
-        timeSlots: true,
-      },
-    });
+    let parking;
+    try {
+      parking = await this.prisma.parkingSpace.findFirst({
+        where: {
+          id,
+          deletedAt: null,
+        },
+        select: {
+          id: true,
+          ownerId: true,
+          name: true,
+          address: true,
+          latitude: true,
+          longitude: true,
+          type: true,
+          vehicleType: true,
+          description: true,
+          status: true,
+          pricePerHour: true,
+          pricePerDay: true,
+          pricePerMonth: true,
+          createdAt: true,
+          updatedAt: true,
+          deletedAt: true,
+          owner: true,
+          amenities: true,
+          images: true,
+          timeSlots: true,
+        },
+      });
+    } catch (error: any) {
+      // If related tables don't exist or vehicleType enum conversion fails, use raw SQL
+      if (error.message?.includes('parking_amenities') || 
+          error.message?.includes('parking_images') || 
+          error.message?.includes('parking_time_slots') ||
+          error.message?.includes('vehicleType') ||
+          error.message?.includes('vehicle_type')) {
+        
+        // Use raw SQL to handle enum conversion
+        const rawQuery = `
+          SELECT 
+            ps.id,
+            ps.owner_id as "ownerId",
+            ps.name,
+            ps.address,
+            ps.latitude,
+            ps.longitude,
+            ps.type,
+            ps.vehicle_type::text as "vehicleType",
+            ps.description,
+            ps.status,
+            ps.price_per_hour as "pricePerHour",
+            ps.price_per_day as "pricePerDay",
+            ps.price_per_month as "pricePerMonth",
+            ps.created_at as "createdAt",
+            ps.updated_at as "updatedAt",
+            ps.deleted_at as "deletedAt"
+          FROM parking_spaces ps
+          WHERE ps.id = '${id.replace(/'/g, "''")}' AND ps.deleted_at IS NULL
+        `;
+        
+        const rawResults = await this.prisma.$queryRawUnsafe(rawQuery);
+        const rawParking = (rawResults as any[])[0];
+        
+        if (!rawParking) {
+          throw new NotFoundException('Parking space not found');
+        }
+        
+        // Fetch owner separately
+        const owner = await this.prisma.user.findUnique({
+          where: { id: rawParking.ownerId },
+          select: { id: true, name: true, email: true },
+        });
+        
+        parking = {
+          ...rawParking,
+          vehicleType: rawParking.vehicleType as VehicleTypeString,
+          owner: owner || null,
+          amenities: [],
+          images: [],
+          timeSlots: null,
+        } as any;
+      } else {
+        throw error;
+      }
+    }
 
     if (!parking) {
       throw new NotFoundException('Parking space not found');
@@ -305,15 +676,100 @@ export class ParkingService {
       };
     }
 
-    const updated = await this.prisma.parkingSpace.update({
-      where: { id },
-      data: updatePayload,
-      include: {
-        owner: true,
-        amenities: true,
-        images: true,
-      },
-    });
+    let updated;
+    try {
+      updated = await this.prisma.parkingSpace.update({
+        where: { id },
+        data: updatePayload,
+        select: {
+          id: true,
+          ownerId: true,
+          name: true,
+          address: true,
+          latitude: true,
+          longitude: true,
+          type: true,
+          vehicleType: true,
+          description: true,
+          status: true,
+          pricePerHour: true,
+          pricePerDay: true,
+          pricePerMonth: true,
+          createdAt: true,
+          updatedAt: true,
+          deletedAt: true,
+          owner: true,
+          amenities: true,
+          images: true,
+        },
+      });
+    } catch (error: any) {
+      // If related tables don't exist or vehicleType enum conversion fails, use raw SQL
+      if (error.message?.includes('parking_amenities') || 
+          error.message?.includes('parking_images') ||
+          error.message?.includes('vehicleType') ||
+          error.message?.includes('vehicle_type')) {
+        
+        // First update the parking space
+        await this.prisma.$executeRawUnsafe(`
+          UPDATE parking_spaces 
+          SET 
+            name = '${updatePayload.name?.replace(/'/g, "''") || ''}',
+            address = '${updatePayload.address?.replace(/'/g, "''") || ''}',
+            type = '${updatePayload.type || ''}',
+            vehicle_type = '${updatePayload.vehicleType?.replace(/'/g, "''") || ''}',
+            description = ${updatePayload.description ? `'${updatePayload.description.replace(/'/g, "''")}'` : 'NULL'},
+            status = '${updatePayload.status || ''}',
+            price_per_hour = ${updatePayload.pricePerHour || 'NULL'},
+            price_per_day = ${updatePayload.pricePerDay || 0},
+            price_per_month = ${updatePayload.pricePerMonth || 0},
+            updated_at = NOW()
+          WHERE id = '${id.replace(/'/g, "''")}'
+        `);
+        
+        // Then fetch using raw SQL
+        const rawQuery = `
+          SELECT 
+            ps.id,
+            ps.owner_id as "ownerId",
+            ps.name,
+            ps.address,
+            ps.latitude,
+            ps.longitude,
+            ps.type,
+            ps.vehicle_type::text as "vehicleType",
+            ps.description,
+            ps.status,
+            ps.price_per_hour as "pricePerHour",
+            ps.price_per_day as "pricePerDay",
+            ps.price_per_month as "pricePerMonth",
+            ps.created_at as "createdAt",
+            ps.updated_at as "updatedAt",
+            ps.deleted_at as "deletedAt"
+          FROM parking_spaces ps
+          WHERE ps.id = '${id.replace(/'/g, "''")}'
+        `;
+        
+        const rawResults = await this.prisma.$queryRawUnsafe(rawQuery);
+        const rawParking = (rawResults as any[])[0];
+        
+        // Fetch owner separately
+        const owner = await this.prisma.user.findUnique({
+          where: { id: rawParking.ownerId },
+          select: { id: true, name: true, email: true },
+        });
+        
+        updated = {
+          ...rawParking,
+          vehicleType: rawParking.vehicleType as VehicleTypeString,
+          owner: owner || null,
+          amenities: [],
+          images: [],
+        } as any;
+      } else {
+        throw error;
+      }
+    }
 
     return this.mapToResponseDto(updated);
   }
@@ -346,7 +802,7 @@ export class ParkingService {
       latitude: parseFloat(parking.latitude),
       longitude: parseFloat(parking.longitude),
       type: parking.type,
-      vehicleType: parking.vehicleType,
+      vehicleType: parking.vehicleType as VehicleTypeString,
       description: parking.description,
       status: parking.status,
       pricePerHour: parking.pricePerHour ? parseFloat(parking.pricePerHour) : undefined,
@@ -357,6 +813,7 @@ export class ParkingService {
       images: parking.images?.map((img: any) => img.imageUrl).sort((a: any, b: any) => a.displayOrder - b.displayOrder) || [],
       ownerId: parking.ownerId,
       ownerName: parking.owner?.name || '',
+      ownerVerified: parking.owner?.verified || false,
       createdAt: parking.createdAt,
       updatedAt: parking.updatedAt,
     };
