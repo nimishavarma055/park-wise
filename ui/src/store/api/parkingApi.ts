@@ -134,7 +134,11 @@ export const parkingApi = baseApi.injectEndpoints({
         method: 'PATCH',
         body: data,
       }),
-      invalidatesTags: (result, error, { id }) => [{ type: 'Parking', id }],
+      transformResponse: (response: any) => {
+        // Handle both wrapped and unwrapped responses
+        return response?.data || response;
+      },
+      invalidatesTags: (result, error, { id }) => [{ type: 'Parking', id }, { type: 'Parking', id: 'LIST' }],
     }),
     deleteParking: builder.mutation<void, string>({
       query: (id) => ({

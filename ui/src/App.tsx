@@ -8,6 +8,7 @@ import { ParkingDetails } from './pages/ParkingDetails';
 import { Booking } from './pages/Booking';
 import { ListParking } from './pages/ListParking';
 import { MyParking } from './pages/MyParking';
+import { EditParking } from './pages/EditParking';
 import { AdminDashboard } from './pages/AdminDashboard';
 
 function App() {
@@ -23,6 +24,7 @@ function App() {
             <Route path="/parking/:id" element={<ParkingDetails />} />
             <Route path="/booking/:id" element={<Booking />} />
             <Route path="/list-parking" element={<ListParking />} />
+            <Route path="/edit-parking/:id" element={<EditParking />} />
             <Route path="/my-parking" element={<MyParking />} />
             <Route path="/admin" element={<AdminDashboard />} />
           </Routes>

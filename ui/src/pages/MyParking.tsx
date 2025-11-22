@@ -6,7 +6,7 @@ import { TabSwitch } from '../components/TabSwitch';
 import { Button } from '../components/Button';
 import { useAuth } from '../context/AuthContext';
 import { useGetBookingsQuery } from '../store/api/bookingsApi';
-import { useGetParkingsQuery } from '../store/api/parkingApi';
+import { useGetParkingsQuery, useDeleteParkingMutation } from '../store/api/parkingApi';
 
 export const MyParking = () => {
   const { user } = useAuth();
@@ -22,6 +22,8 @@ export const MyParking = () => {
     { page: 1, limit: 100, ownerId: user?.id },
     { skip: !user || activeTab !== 'listings' }
   );
+
+  const [deleteParking, { isLoading: isDeleting }] = useDeleteParkingMutation();
 
   if (!user) {
     return (
@@ -128,7 +130,7 @@ export const MyParking = () => {
                   <div className="flex flex-col md:flex-row gap-6">
                     <div className="md:w-48">
                       <img
-                        src={listing.images[0] || 'https://via.placeholder.com/300x200?text=Parking'}
+                        src={listing.images?.[0] || 'https://via.placeholder.com/300x200?text=Parking'}
                         alt={listing.name}
                         className="w-full h-32 object-cover rounded-lg"
                         onError={(e) => {
@@ -142,7 +144,7 @@ export const MyParking = () => {
                           <h3 className="text-xl font-semibold mb-1">{listing.name}</h3>
                           <div className="flex items-center text-gray-600 text-sm mb-2">
                             <MapPin size={16} className="mr-1" />
-                            <span>{listing.location}</span>
+                            <span>{listing.address}</span>
                           </div>
                         </div>
                         <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(listing.status)}`}>
@@ -172,6 +174,7 @@ export const MyParking = () => {
                         </Button>
                         <Button
                           variant="outline"
+                          onClick={() => navigate(`/edit-parking/${listing.id}`)}
                           className="flex items-center space-x-1"
                         >
                           <Edit size={16} />
@@ -179,10 +182,21 @@ export const MyParking = () => {
                         </Button>
                         <Button
                           variant="outline"
+                          onClick={async () => {
+                            if (window.confirm('Are you sure you want to delete this parking listing?')) {
+                              try {
+                                await deleteParking(listing.id).unwrap();
+                                // The query will automatically refetch due to invalidatesTags
+                              } catch (error: any) {
+                                alert(error?.data?.message || 'Failed to delete parking listing');
+                              }
+                            }
+                          }}
+                          disabled={isDeleting}
                           className="flex items-center space-x-1 text-red-600 hover:text-red-700"
                         >
                           <Trash2 size={16} />
-                          <span>Delete</span>
+                          <span>{isDeleting ? 'Deleting...' : 'Delete'}</span>
                         </Button>
                       </div>
                     </div>
