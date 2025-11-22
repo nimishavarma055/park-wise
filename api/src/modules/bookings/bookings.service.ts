@@ -12,11 +12,30 @@ export class BookingsService {
     const { parkingId, bookingType, startTime, endTime, hours } = createBookingDto;
 
     // Verify parking exists and is approved
+    // Use select to exclude location (geography) field
     const parking = await this.prisma.parkingSpace.findFirst({
       where: {
         id: parkingId,
         deletedAt: null,
         status: 'approved',
+      },
+      select: {
+        id: true,
+        ownerId: true,
+        name: true,
+        address: true,
+        latitude: true,
+        longitude: true,
+        type: true,
+        vehicleType: true,
+        description: true,
+        status: true,
+        pricePerHour: true,
+        pricePerDay: true,
+        pricePerMonth: true,
+        createdAt: true,
+        updatedAt: true,
+        deletedAt: true,
       },
     });
 

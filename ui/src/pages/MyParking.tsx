@@ -168,16 +168,16 @@ export const MyParking = () => {
                         <Button
                           variant="outline"
                           onClick={() => navigate(`/parking/${listing.id}`)}
-                          className="flex items-center space-x-1"
+                          className="flex items-center space-x-1 px-3 py-1.5 text-xs"
                         >
                           <span>View</span>
                         </Button>
                         <Button
                           variant="outline"
                           onClick={() => navigate(`/edit-parking/${listing.id}`)}
-                          className="flex items-center space-x-1"
+                          className="flex items-center space-x-1 px-3 py-1.5 text-xs"
                         >
-                          <Edit size={16} />
+                          <Edit size={14} />
                           <span>Edit</span>
                         </Button>
                         <Button
@@ -193,9 +193,9 @@ export const MyParking = () => {
                             }
                           }}
                           disabled={isDeleting}
-                          className="flex items-center space-x-1 text-red-600 hover:text-red-700"
+                          className="flex items-center space-x-1 px-3 py-1.5 text-xs text-red-600 hover:text-red-700"
                         >
-                          <Trash2 size={16} />
+                          <Trash2 size={14} />
                           <span>{isDeleting ? 'Deleting...' : 'Delete'}</span>
                         </Button>
                       </div>
