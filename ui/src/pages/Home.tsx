@@ -1,14 +1,14 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Filter } from 'lucide-react';
+import { Search, Filter, MapPin } from 'lucide-react';
 import { Card } from '../components/Card';
 import { Button } from '../components/Button';
 import { FilterBar } from '../components/FilterBar';
-import { LocationPicker } from '../components/LocationPicker';
 import { ViewToggle } from '../components/ViewToggle';
 import { MapView } from '../components/MapView';
 import { ParkingCard } from '../components/ParkingCard';
 import { SortDropdown } from '../components/SortDropdown';
+import { LocationSearch } from '../components/LocationSearch';
 import { useLocation } from '../context/LocationContext';
 import { calculateDistance } from '../utils/geolocation';
 import { sortParkings, type SortOption } from '../utils/sorting';
@@ -16,19 +16,20 @@ import { useSearchParkingsQuery, useGetParkingsQuery, type Parking } from '../st
 
 export const Home = () => {
   const navigate = useNavigate();
-  const { userLocation, setUserLocation } = useLocation();
+  const { userLocation } = useLocation();
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [view, setView] = useState<'map' | 'list'>('list');
   const [sortBy, setSortBy] = useState<SortOption>('price-low');
   const [selectedParkingId, setSelectedParkingId] = useState<string | undefined>();
+  const [searchLocation, setSearchLocation] = useState<{ lat: number; lng: number; address: string } | null>(null);
 
-  // Auto-switch to distance sorting when user location is set
+  // Auto-switch to distance sorting when location is set
   useEffect(() => {
-    if (userLocation) {
+    if (searchLocation || userLocation) {
       setSortBy('distance');
     }
-  }, [userLocation]);
+  }, [searchLocation, userLocation]);
   const [filters, setFilters] = useState<{
     type?: 'covered' | 'open';
     vehicleType?: '2W' | '4W' | 'both';
@@ -37,11 +38,13 @@ export const Home = () => {
   }>({});
 
   // Fetch parkings using RTK Query
-  const shouldSearch = userLocation && (userLocation.latitude && userLocation.longitude);
+  // Use searchLocation if set, otherwise use userLocation
+  const locationToUse = searchLocation || (userLocation ? { lat: userLocation.latitude, lng: userLocation.longitude } : null);
+  const shouldSearch = locationToUse && (locationToUse.lat && locationToUse.lng);
   
   const searchParams = shouldSearch ? {
-    latitude: userLocation.latitude,
-    longitude: userLocation.longitude,
+    latitude: locationToUse.lat,
+    longitude: locationToUse.lng,
     radius: 10,
     type: filters.type,
     vehicleType: filters.vehicleType,
@@ -82,20 +85,21 @@ export const Home = () => {
     return [];
   }, [parkingsData]);
 
-  // Calculate distances when user location changes
+  // Calculate distances when location changes
   const parkingsWithDistance = useMemo(() => {
     if (!Array.isArray(parkings) || parkings.length === 0) return [];
-    if (!userLocation) return parkings;
+    const location = searchLocation || (userLocation ? { lat: userLocation.latitude, lng: userLocation.longitude } : null);
+    if (!location) return parkings;
     return parkings.map((parking) => ({
       ...parking,
       distance: parking.distance || calculateDistance(
-        userLocation.latitude,
-        userLocation.longitude,
+        location.lat,
+        location.lng,
         parking.latitude,
         parking.longitude
       ),
     }));
-  }, [parkings, userLocation]);
+  }, [parkings, userLocation, searchLocation]);
 
   // Filter parkings
   const filteredParkings = useMemo(() => {
@@ -182,26 +186,50 @@ export const Home = () => {
             <p className="text-gray-600 text-lg">Discover the perfect parking spot for your needs</p>
           </div>
           
-          {/* Location Picker */}
-          <div className="mb-4">
-            <LocationPicker
-              onLocationSelect={setUserLocation}
-              currentLocation={userLocation}
-            />
-          </div>
-
           {/* Search and Controls */}
-          <div className="flex flex-col md:flex-row gap-4 mb-6">
-            <div className="flex-1 relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-              <input
-                type="text"
-                placeholder="Search by location, parking name, or address..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-12 pr-4 py-3.5 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all bg-white shadow-sm hover:shadow-md"
-              />
+          <div className="flex flex-col gap-4 mb-6">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex-1 relative">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                <input
+                  type="text"
+                  placeholder="Search by parking name..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-12 pr-4 py-3.5 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all bg-white shadow-sm hover:shadow-md"
+                />
+              </div>
+              <div className="flex-1">
+                <LocationSearch
+                  onLocationSelect={(address, lat, lng) => {
+                    setSearchLocation({ lat, lng, address });
+                    setSearchQuery(address);
+                  }}
+                  placeholder="Search for a location..."
+                  className="w-full"
+                />
+              </div>
             </div>
+            {searchLocation && (
+              <div className="flex items-center justify-between bg-primary/10 px-4 py-2 rounded-lg">
+                <div className="flex items-center space-x-2">
+                  <MapPin size={16} className="text-primary" />
+                  <span className="text-sm text-gray-700">
+                    Searching near: {searchLocation.address || `${searchLocation.lat.toFixed(4)}, ${searchLocation.lng.toFixed(4)}`}
+                  </span>
+                </div>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setSearchLocation(null);
+                    setSearchQuery('');
+                  }}
+                  className="text-xs px-3 py-1"
+                >
+                  Clear
+                </Button>
+              </div>
+            )}
             <div className="flex items-center gap-3">
               <ViewToggle view={view} onViewChange={setView} />
               <Button
@@ -336,7 +364,7 @@ export const Home = () => {
           <div className="mb-6">
             <MapView
               parkings={sortedParkings}
-              userLocation={userLocation}
+              userLocation={searchLocation ? { latitude: searchLocation.lat, longitude: searchLocation.lng } : userLocation}
               onParkingClick={handleParkingClick}
               selectedParkingId={selectedParkingId}
             />

@@ -265,7 +265,7 @@ export const Booking = () => {
                 </div>
                 <div>
                   <div className="text-sm text-gray-600">Location</div>
-                  <div className="font-semibold">{parking.location}</div>
+                  <div className="font-semibold">{parking.address}</div>
                 </div>
                 <div>
                   <div className="text-sm text-gray-600">Duration</div>

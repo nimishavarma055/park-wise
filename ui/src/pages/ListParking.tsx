@@ -14,7 +14,6 @@ export const ListParking = () => {
   const [createParking, { isLoading: isCreating }] = useCreateParkingMutation();
   const [formData, setFormData] = useState({
     name: '',
-    location: '',
     address: '',
     type: 'covered' as 'covered' | 'open',
     vehicleType: 'both' as '2W' | '4W' | 'both',
@@ -23,6 +22,9 @@ export const ListParking = () => {
     pricePerHour: '',
     description: '',
   });
+
+  const [latitude, setLatitude] = useState<number>(0);
+  const [longitude, setLongitude] = useState<number>(0);
 
   const [availability, setAvailability] = useState({
     monday: true,
@@ -42,14 +44,16 @@ export const ListParking = () => {
     }
 
     try {
-      // Get coordinates from location (simplified - in production, use geocoding)
-      const [latitude, longitude] = formData.location.split(',').map(Number);
+      if (!latitude || !longitude) {
+        alert('Please select a location on the map');
+        return;
+      }
       
       await createParking({
         name: formData.name,
         address: formData.address,
-        latitude: latitude || 0,
-        longitude: longitude || 0,
+        latitude: latitude,
+        longitude: longitude,
         type: formData.type,
         vehicleType: formData.vehicleType,
         description: formData.description,
@@ -92,17 +96,10 @@ export const ListParking = () => {
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 required
               />
-              <Input
-                label="Location"
-                placeholder="e.g., MG Road, Bangalore"
-                value={formData.location}
-                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                required
-              />
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Address</label>
                 <textarea
-                  placeholder="Enter full address"
+                  placeholder="Enter full address or use the map search below to auto-fill"
                   value={formData.address}
                   onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
@@ -111,8 +108,25 @@ export const ListParking = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Select Location on Map</label>
-                <MapPlaceholder />
+                <label className="block text-sm font-medium text-gray-700 mb-2">Select Location</label>
+                <MapPlaceholder 
+                  onLocationSelect={(lat, lng) => {
+                    setLatitude(lat);
+                    setLongitude(lng);
+                  }}
+                  onAddressChange={(addr, lat, lng) => {
+                    setLatitude(lat);
+                    setLongitude(lng);
+                    setFormData({ ...formData, address: addr });
+                  }}
+                  markerTitle="Parking Location"
+                  showSearch={true}
+                />
+                {latitude && longitude && (
+                  <p className="text-xs text-gray-500 mt-2">
+                    Coordinates: {latitude.toFixed(6)}, {longitude.toFixed(6)}
+                  </p>
+                )}
               </div>
             </div>
           </Card>

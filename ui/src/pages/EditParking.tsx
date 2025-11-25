@@ -159,7 +159,27 @@ export const EditParking = () => {
                   required
                 />
               </div>
-              <MapPlaceholder lat={latitude} lon={longitude} />
+              <MapPlaceholder 
+                lat={latitude} 
+                lon={longitude}
+                address={formData.address}
+                onLocationSelect={(lat, lng) => {
+                  setLatitude(lat);
+                  setLongitude(lng);
+                }}
+                onAddressChange={(addr, lat, lng) => {
+                  setLatitude(lat);
+                  setLongitude(lng);
+                  setFormData({ ...formData, address: addr });
+                }}
+                markerTitle="Parking Location"
+                showSearch={true}
+              />
+              {latitude && longitude && (
+                <p className="text-xs text-gray-500 mt-2">
+                  Coordinates: {latitude.toFixed(6)}, {longitude.toFixed(6)}
+                </p>
+              )}
             </div>
 
             <div>

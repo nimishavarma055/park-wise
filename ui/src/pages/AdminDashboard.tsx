@@ -89,7 +89,7 @@ export const AdminDashboard = () => {
                   {pendingListings.map((listing) => (
                     <tr key={listing.id} className="border-b hover:bg-gray-50">
                       <td className="py-3 px-4">{listing.name}</td>
-                      <td className="py-3 px-4">{listing.location}</td>
+                      <td className="py-3 px-4">{listing.address}</td>
                       <td className="py-3 px-4">
                         <span className={`px-2 py-1 rounded text-sm ${
                           listing.type === 'covered' ? 'bg-primary/10 text-primary' : 'bg-secondary/20 text-accent'

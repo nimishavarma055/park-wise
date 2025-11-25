@@ -7,6 +7,7 @@ import { store } from './store/store'
 import { AuthProvider } from './context/AuthContext'
 import { ParkingProvider } from './context/ParkingContext'
 import { LocationProvider } from './context/LocationContext'
+import { GoogleMapsProvider } from './context/GoogleMapsContext'
 import { loadUserFromStorage } from './store/slices/authSlice'
 
 const AppWithRedux = () => {
@@ -15,13 +16,15 @@ const AppWithRedux = () => {
   }, []);
 
   return (
-    <AuthProvider>
-      <ParkingProvider>
-        <LocationProvider>
-          <App />
-        </LocationProvider>
-      </ParkingProvider>
-    </AuthProvider>
+    <GoogleMapsProvider>
+      <AuthProvider>
+        <ParkingProvider>
+          <LocationProvider>
+            <App />
+          </LocationProvider>
+        </ParkingProvider>
+      </AuthProvider>
+    </GoogleMapsProvider>
   );
 };
 

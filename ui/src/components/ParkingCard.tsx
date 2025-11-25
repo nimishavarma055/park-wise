@@ -116,7 +116,7 @@ export const ParkingCard = ({ parking, showTimeSlots = false }: ParkingCardProps
         </h3>
         <div className="flex items-center text-gray-600 text-sm mb-3">
           <MapPin size={16} className="mr-1.5 text-gray-400" />
-          <span className="truncate">{parking.location}</span>
+          <span className="truncate">{parking.address}</span>
         </div>
         <DistanceBadge distance={parking.distance} className="mb-3" />
         <AmenityIcons amenities={parking.amenities} className="mb-4" />
